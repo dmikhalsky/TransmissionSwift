@@ -110,6 +110,14 @@ nonisolated enum ColumnFormatters {
     @MainActor private static var relativeDateCache: [Date: String] = [:]
     @MainActor private static var relativeDateCacheMinute: Int?
 
+    /// Under a minute (including small daemon clock skew) collapses to "Just now",
+    /// so the text stays stable while `activityDate` moves on every poll.
+    static func lastActivity(_ date: Date?, now: Date = .now) -> String {
+        guard let date else { return "\u{2014}" }
+        if now.timeIntervalSince(date) < 60 { return "Just now" }
+        return date.formatted(.relative(presentation: .named))
+    }
+
     static func queuePosition(_ position: Int?) -> String {
         position.map { "#\($0)" } ?? "\u{2014}"
     }

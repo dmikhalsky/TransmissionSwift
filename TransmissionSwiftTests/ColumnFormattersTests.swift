@@ -29,6 +29,30 @@ struct ColumnFormattersTests {
         #expect(ColumnFormatters.ratio(-2) == "\u{2014}")
     }
 
+    @Test func lastActivity_nilIsEmDash() {
+        #expect(ColumnFormatters.lastActivity(nil) == "\u{2014}")
+    }
+
+    @Test func lastActivity_underAMinuteIsJustNow() {
+        // Each incremental poll moves activityDate by a second; the text must not.
+        let now = Date()
+        #expect(ColumnFormatters.lastActivity(now, now: now) == "Just now")
+        #expect(ColumnFormatters.lastActivity(now.addingTimeInterval(-1), now: now) == "Just now")
+        #expect(ColumnFormatters.lastActivity(now.addingTimeInterval(-59), now: now) == "Just now")
+    }
+
+    @Test func lastActivity_daemonClockAheadIsJustNow() {
+        // activityDate comes from the daemon's clock; a skew must not read "in 2 sec.".
+        let now = Date()
+        #expect(ColumnFormatters.lastActivity(now.addingTimeInterval(2), now: now) == "Just now")
+    }
+
+    @Test func lastActivity_olderUsesRelativeStyle() {
+        let now = Date()
+        #expect(ColumnFormatters.lastActivity(now.addingTimeInterval(-60), now: now) == "1 minute ago")
+        #expect(ColumnFormatters.lastActivity(now.addingTimeInterval(-3600), now: now) == "1 hour ago")
+    }
+
     @Test func ratio_positiveIsTwoDecimals() {
         #expect(ColumnFormatters.ratio(1.755) == "1.75")
         #expect(ColumnFormatters.ratio(0.4) == "0.40")
